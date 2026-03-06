@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Birthday Exploit</title>
+<style>
+    :root {
+        --terminal-green: #0f0;
+        --glow: 0 0 5px #0f0, 0 0 10px #0f0;
+    }
+    
+    body, html {
+        margin: 0;
+        padding: 0;
+        background-color: black;
+        /* STARTS WITH BACKGROUND 1 */
+        background-image: url('bg1.jpg'); 
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        /* This makes the transition between bg1 and bg2 smooth! */
+        transition: background-image 1.5s ease-in-out; 
+        
+        color: var(--terminal-green);
+        font-family: 'Courier New', Courier, monospace;
+        overflow-x: hidden;
+        scroll-behavior: smooth;
+    }
+
+    #matrixCanvas, #fireworksCanvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+    }
+    
+    #matrixCanvas { 
+        z-index: -1;
+        opacity: 0.8; 
+        mix-blend-mode: screen; 
+    }
+    
+    #fireworksCanvas { 
+        z-index: 999; 
+        pointer-events: none; 
+    }
+
+    #init-screen {
+        position: fixed;
+        top: 0; left: 0; width: 100vw; height: 100vh;
+        background: black;
+        z-index: 100;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+    #init-btn {
+        background: transparent;
+        color: var(--terminal-green);
+        border: 2px solid var(--terminal-green);
+        padding: 15px 30px;
+        font-size: 1.5rem;
+        font-family: inherit;
+        cursor: pointer;
+        text-shadow: var(--glow);
+        box-shadow: 0 0 10px #0f0 inset;
+        transition: 0.2s;
+    }
+    #init-btn:hover {
+        background: var(--terminal-green);
+        color: black;
+    }
+
+    #terminal-container {
+        padding: 20px;
+        font-size: 1.1rem;
+        min-height: 100vh;
+        z-index: 1;
+        position: relative;
+        background: rgba(0, 0, 0, 0.6); 
+    }
+    .cmd-prompt { color: #0f0; font-weight: bold; }
+    .cursor {
+        display: inline-block;
+        width: 10px;
+        height: 1.2em;
+        background-color: var(--terminal-green);
+        vertical-align: bottom;
+        animation: blink 1s step-end infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+    
+    .hidden { display: none !important; }
+
+    #reveal-container {
+        position: relative;
+        z-index: 10;
+        min-height: 100vh;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 50px 20px;
+        text-align: center;
+        text-shadow: 0 0 3px #0f0;
+        background: rgba(0, 0, 0, 0.6);
+    }
+
+    pre {
+        font-family: monospace;
+        white-space: pre;
+        line-height: 1.2;
+        margin: 10px 0;
+    }
+
+    #penguin { 
+        font-size: 16px; 
+        font-weight: bold; 
+        color: #fff; 
+        text-shadow: none;
+    }
+    
+    #bday-title {
+        font-size: 3rem;
+        margin: 10px 0;
+        text-transform: uppercase;
+        text-shadow: var(--glow);
+    }
+    
+    #age-span { font-size: 1.5rem; margin-bottom: 30px; }
+    
+    del {
+        color: #f00;
+        text-shadow: 0 0 5px #f00;
+        text-decoration: line-through;
+        opacity: 0.8;
+    }
+    
+    .message-text {
+        font-size: 1.2rem;
+        max-width: 600px;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+
+    .shayari {
+        font-style: italic;
+        border-left: 4px solid var(--terminal-green);
+        padding-left: 15px;
+        margin: 30px 0;
+        text-align: left;
+        max-width: 600px;
+        font-size: 1.1rem;
+    }
+    
+    .signature {
+        text-align: right;
+        font-weight: bold;
+        margin-top: 10px;
+    }
+
+    #cake {
+        font-size: 1.2rem;
+        color: #ff0;
+        text-shadow: 0 0 5px #ff0;
+        margin-top: 40px;
+    }
+</style>
+</head>
+<body>
+
+<canvas id="matrixCanvas"></canvas>
+<canvas id="fireworksCanvas"></canvas>
+
+<div id="init-screen">
+    <button id="init-btn">[ INITIALIZE CONNECTION ]</button>
+</div>
+
+<div id="terminal-container">
+    <div id="terminal-output"></div>
+    <span id="terminal-current"></span><span class="cursor" id="cursor"></span>
+</div>
+
+<div id="reveal-container">
+    <pre id="penguin">
+       .--.
+      |o_o |
+      |:_/ |
+     //   \ \
+    (|     | )
+   /'\_   _/`\
+   \___)=(___/
+    </pre>
+    <h1 id="bday-title">HAPPY BIRTHDAY <span id="name-span"></span></h1>
+    <h2 id="age-span"></h2>
+    
+    <div class="message-text">
+        Happiest birthday Ayash.<br><br>
+        My mouth has no words to fathom how proud I am to have you as my friend.<br>
+        You deserve all the happiness in this world.
+    </div>
+
+    <div class="shayari">
+        Na taaj ka shauq hai, na shohrat ka guroor hai,<br>
+        Par mere dost, tu meri zindagi ka zaroor hai.<br>
+        Har roz teri mehnat mujhe raasta dikhati hai,<br>
+        Teri lagan hi meri himmat ko jagati hai.<br>
+        Log kehte hain sitare aasman mein chamakte hain,<br>
+        Par maine ek sitara zameen par dekha hai.<br>
+        Ayash, teri dosti meri sabse badi daulat hai,<br>
+        Aur tere jaisa dost milna meri sabse badi kismat hai.<br>
+        <div class="signature">— nemfex</div>
+    </div>
+
+    <pre id="cake"></pre>
+</div>
+
+<script>
+    // --- AUDIO SETUP ---
+    const FAAHH_AUDIO_URL = "fahhh.mp3"; 
+    const faahhSound = new Audio(FAAHH_AUDIO_URL);
+
+    const TRANSITION_AUDIO_URL = "transition.mp3"; 
+    const transitionSound = new Audio(TRANSITION_AUDIO_URL);
+
+    function playJokeSound() {
+        if (faahhSound.src) {
+            faahhSound.currentTime = 0; 
+            faahhSound.play().catch(e => console.log("Audio play blocked."));
+        }
+    }
+
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playTone(freq, duration) {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+    }
+
+    async function playHappyBirthday() {
+        const C4=261.63, D4=293.66, E4=329.63, F4=349.23, G4=392.00, A4=440.00, Bb4=466.16, C5=523.25;
+        const melody = [
+            [C4, 0.3], [C4, 0.1], [D4, 0.4], [C4, 0.4], [F4, 0.4], [E4, 0.8],
+            [C4, 0.3], [C4, 0.1], [D4, 0.4], [C4, 0.4], [G4, 0.4], [F4, 0.8],
+            [C4, 0.3], [C4, 0.1], [C5, 0.4], [A4, 0.4], [F4, 0.4], [E4, 0.4], [D4, 0.6],
+            [Bb4,0.3], [Bb4,0.1], [A4, 0.4], [F4, 0.4], [G4, 0.4], [F4, 1.0]
+        ];
+        for (let note of melody) {
+            playTone(note[0], note[1]);
+            await sleep(note[1] * 1000 + 50);
+        }
+    }
+
+    const mCanvas = document.getElementById('matrixCanvas');
+    const mCtx = mCanvas.getContext('2d');
+    mCanvas.width = window.innerWidth;
+    mCanvas.height = window.innerHeight;
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$+-*/=%""\'#&_(),.;:?!\\|{}<>[]^~'.split('');
+    const fontSize = 14;
+    const columns = mCanvas.width / fontSize;
+    const drops = [];
+    for(let x = 0; x < columns; x++) drops[x] = 1;
+
+    function drawMatrix() {
+        mCtx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+        mCtx.fillRect(0, 0, mCanvas.width, mCanvas.height);
+        mCtx.fillStyle = '#0F0';
+        mCtx.font = fontSize + 'px monospace';
+        for(let i = 0; i < drops.length; i++) {
+            const text = chars[Math.floor(Math.random() * chars.length)];
+            mCtx.fillText(text, i * fontSize, drops[i] * fontSize);
+            if(drops[i] * fontSize > mCanvas.height && Math.random() > 0.975) drops[i] = 0;
+            drops[i]++;
+        }
+    }
+    setInterval(drawMatrix, 33);
+
+    const terminalLines = [
+        { type: 'cmd', text: "whoami", delay: 800 },
+        { type: 'out', text: "nemfex", delay: 200 },
+        { type: 'cmd', text: "scanning_network --birthdays", delay: 1000 },
+        { type: 'out', text: "Connecting to LifeChain node...", delay: 600 },
+        { type: 'out', text: "Reading blockchain ledger...", delay: 800 },
+        { type: 'out', text: "✔ Birthday detected", delay: 500 },
+        { type: 'out', text: "User: Ayash Bera", delay: 800 },
+        { type: 'cmd', text: "sudo ./birthday_exploit.sh", delay: 1200 },
+        { type: 'pwd', text: "[sudo] password for nemfex: ", delay: 1000 },
+        { type: 'out', text: "Initializing celebration modules...", delay: 700 },
+        { type: 'out', text: "Loading happiness.patch...", delay: 500 },
+        { type: 'out', text: "Deploying friendship_protocol...", delay: 600 },
+        { type: 'out', text: "Compiling cake_generator...", delay: 600 },
+        { type: 'out', text: "Launching penguin.exe...", delay: 900 },
+        { type: 'out', text: "Birthday exploit successful.", delay: 1500 }
+    ];
+
+    const tOutput = document.getElementById('terminal-output');
+    const tCurrent = document.getElementById('terminal-current');
+    const prefix = "nemfex@linux:~$ ";
+
+    async function typeText(target, text, speed = 30) {
+        for(let i=0; i<text.length; i++) {
+            target.innerHTML += text.charAt(i);
+            window.scrollTo(0, document.body.scrollHeight);
+            await sleep(speed + Math.random()*30);
+        }
+    }
+
+    async function runTerminal() {
+        for (const line of terminalLines) {
+            if (line.type === 'cmd') {
+                tCurrent.innerHTML = `<span class="cmd-prompt">${prefix}</span>`;
+                await sleep(500);
+                await typeText(tCurrent, line.text, 40);
+                await sleep(200);
+                tOutput.innerHTML += `<div><span class="cmd-prompt">${prefix}</span>${line.text}</div>`;
+                tCurrent.innerHTML = "";
+            } else if (line.type === 'pwd') {
+                tCurrent.innerHTML = line.text;
+                await sleep(400);
+                await typeText(tCurrent, "********", 60);
+                await sleep(300);
+                tOutput.innerHTML += `<div>${line.text}********</div>`;
+                tCurrent.innerHTML = "";
+            } else {
+                tOutput.innerHTML += `<div>${line.text}</div>`;
+                window.scrollTo(0, document.body.scrollHeight);
+            }
+            await sleep(line.delay);
+        }
+        document.getElementById('cursor').classList.add('hidden');
+        triggerReveal();
+    }
+
+    async function triggerReveal() {
+        // --- TRANSITION SEQUENCE ---
+        // 1. Play transition sound
+        if (transitionSound.src) {
+            transitionSound.play().catch(e => console.log("Transition audio blocked."));
+        }
+        // 2. Change the background image to bg2
+        document.body.style.backgroundImage = "url('bg2.jpg')";
+        
+        // Wait just a second for dramatic effect while the background fades
+        await sleep(1000); 
+
+        const reveal = document.getElementById('reveal-container');
+        reveal.style.display = 'flex';
+        
+        setTimeout(() => {
+            reveal.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+
+        const nameSpan = document.getElementById('name-span');
+        await sleep(1000);
+        nameSpan.innerHTML = "Ayush";
+        await sleep(1000);
+        nameSpan.innerHTML = "<del>Ayush</del>";
+        await sleep(800);
+        nameSpan.innerHTML = "<del>Ayush</del> Ayash";
+        playJokeSound(); 
+
+        const ageSpan = document.getElementById('age-span');
+        await sleep(1500); 
+        ageSpan.innerHTML = "Turning 69";
+        playJokeSound(); 
+        
+        await sleep(1500);
+        ageSpan.innerHTML = "Turning <del>69</del> 420";
+        playJokeSound(); 
+        
+        await sleep(1500);
+        ageSpan.innerHTML = "Turning <del>69</del> <del>420</del> 21";
+
+        await sleep(1000);
+        
+        playHappyBirthday();
+        startFireworks();
+        buildCake();
+    }
+
+    const cakeArt = [
+        "      ,,,,,      ",
+        "     _|||||_     ",
+        "    {~*~*~*~}    ",
+        "  __{*~*~*~*}__  ",
+        " `-------------` "
+    ];
+    async function buildCake() {
+        const cakePre = document.getElementById('cake');
+        for (let i = 0; i < cakeArt.length; i++) {
+            cakePre.innerHTML += cakeArt[i] + "\n";
+            await sleep(800);
+        }
+    }
+
+    const fwCanvas = document.getElementById('fireworksCanvas');
+    const fwCtx = fwCanvas.getContext('2d');
+    fwCanvas.width = window.innerWidth;
+    fwCanvas.height = window.innerHeight;
+    const particles = [];
+
+    function createFirework(x, y) {
+        const numParticles = 80 + Math.random() * 80; 
+        const colors = ['#0f0', '#ff0', '#0ff', '#f0f', '#fff'];
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        for (let i = 0; i < numParticles; i++) {
+            particles.push({
+                x: x, y: y,
+                vx: (Math.random() - 0.5) * 12,
+                vy: (Math.random() - 0.5) * 12,
+                size: Math.random() * 2 + 2, 
+                life: 1, color: color
+            });
+        }
+    }
+
+    function animateFireworks() {
+        fwCtx.clearRect(0, 0, fwCanvas.width, fwCanvas.height);
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.1; 
+            p.life -= 0.02; 
+            
+            fwCtx.shadowBlur = 10;
+            fwCtx.shadowColor = p.color;
+            fwCtx.fillStyle = p.color;
+            fwCtx.globalAlpha = Math.max(0, p.life);
+            fwCtx.beginPath();
+            fwCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            fwCtx.fill();
+            
+            if (p.life <= 0) particles.splice(i, 1);
+        }
+        fwCtx.globalAlpha = 1;
+        fwCtx.shadowBlur = 0; 
+        requestAnimationFrame(animateFireworks);
+    }
+
+    function startFireworks() {
+        animateFireworks();
+        setInterval(() => {
+            const x = Math.random() * fwCanvas.width;
+            const y = Math.random() * (fwCanvas.height / 2);
+            createFirework(x, y);
+        }, 500); 
+    }
+
+    document.getElementById('init-btn').addEventListener('click', () => {
+        document.getElementById('init-screen').style.display = 'none';
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        runTerminal();
+    });
+
+    window.addEventListener('resize', () => {
+        mCanvas.width = window.innerWidth;
+        mCanvas.height = window.innerHeight;
+        fwCanvas.width = window.innerWidth;
+        fwCanvas.height = window.innerHeight;
+    });
+</script>
+</body>
+</html>
