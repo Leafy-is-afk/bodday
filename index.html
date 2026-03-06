@@ -13,14 +13,12 @@
     body, html {
         margin: 0;
         padding: 0;
+        /* Start pure black, the images will load dynamically via JavaScript! */
         background-color: black;
-        /* STARTS WITH BACKGROUND 1 */
-        background-image: url('bg1.jpg'); 
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
-        /* This makes the transition between bg1 and bg2 smooth! */
-        transition: background-image 1.5s ease-in-out; 
+        transition: background-image 0.8s ease-in-out; 
         
         color: var(--terminal-green);
         font-family: 'Courier New', Courier, monospace;
@@ -83,6 +81,14 @@
         background: rgba(0, 0, 0, 0.6); 
     }
     .cmd-prompt { color: #0f0; font-weight: bold; }
+    
+    /* NEW: Red error text for the terminal */
+    .error-text { 
+        color: #ff3333; 
+        font-weight: bold; 
+        text-shadow: 0 0 5px #ff3333;
+    }
+
     .cursor {
         display: inline-block;
         width: 10px;
@@ -204,14 +210,9 @@
     </div>
 
     <div class="shayari">
-        Na taaj ka shauq hai, na shohrat ka guroor hai,<br>
-        Par mere dost, tu meri zindagi ka zaroor hai.<br>
-        Har roz teri mehnat mujhe raasta dikhati hai,<br>
-        Teri lagan hi meri himmat ko jagati hai.<br>
-        Log kehte hain sitare aasman mein chamakte hain,<br>
-        Par maine ek sitara zameen par dekha hai.<br>
-        Ayash, teri dosti meri sabse badi daulat hai,<br>
-        Aur tere jaisa dost milna meri sabse badi kismat hai.<br>
+        Tujh se dosti ka rishta kuch is qadar hai,<br>
+        Ke lafz kam padte hain, aur duaein badh jaati hain.<br>
+        Sada aabad reh mere dost.<br>
         <div class="signature">— nemfex</div>
     </div>
 
@@ -220,11 +221,9 @@
 
 <script>
     // --- AUDIO SETUP ---
-    const FAAHH_AUDIO_URL = "fahhh.mp3"; 
-    const faahhSound = new Audio(FAAHH_AUDIO_URL);
-
-    const TRANSITION_AUDIO_URL = "transition.mp3"; 
-    const transitionSound = new Audio(TRANSITION_AUDIO_URL);
+    const faahhSound = new Audio("fahhh.mp3");
+    const transitionSound = new Audio("transition.mp3");
+    const animeSound = new Audio("anime.mp3");
 
     function playJokeSound() {
         if (faahhSound.src) {
@@ -288,18 +287,28 @@
     }
     setInterval(drawMatrix, 33);
 
+    // --- UPDATED TERMINAL SEQUENCE ---
     const terminalLines = [
         { type: 'cmd', text: "whoami", delay: 800 },
         { type: 'out', text: "nemfex", delay: 200 },
         { type: 'cmd', text: "scanning_network --birthdays", delay: 1000 },
         { type: 'out', text: "Connecting to LifeChain node...", delay: 600 },
         { type: 'out', text: "Reading blockchain ledger...", delay: 800 },
-        { type: 'out', text: "✔ Birthday detected", delay: 500 },
-        { type: 'out', text: "User: Ayash Bera", delay: 800 },
+        { type: 'out', text: "✔ Birthday detected: Ayash Bera", delay: 800 },
         { type: 'cmd', text: "sudo ./birthday_exploit.sh", delay: 1200 },
         { type: 'pwd', text: "[sudo] password for nemfex: ", delay: 1000 },
         { type: 'out', text: "Initializing celebration modules...", delay: 700 },
-        { type: 'out', text: "Loading happiness.patch...", delay: 500 },
+        
+        // The Sus Anime Sequence
+        { type: 'cmd', text: "./load_wallpaper.sh --sus", delay: 1000 },
+        { type: 'out', text: "Loading sus wallpaper...", delay: 500 },
+        { type: 'action', action: 'load_sus', delay: 2500 }, // Pauses to look at the image
+        
+        // The Error & Fix Sequence
+        { type: 'error', text: "ERROR: CRITICAL CRINGE DETECTED. SYSTEM OVERRIDE.", delay: 1000 },
+        { type: 'out', text: "Switching to safe mode...", delay: 800 },
+        { type: 'action', action: 'load_safe', delay: 1500 },
+        
         { type: 'out', text: "Deploying friendship_protocol...", delay: 600 },
         { type: 'out', text: "Compiling cake_generator...", delay: 600 },
         { type: 'out', text: "Launching penguin.exe...", delay: 900 },
@@ -320,6 +329,18 @@
 
     async function runTerminal() {
         for (const line of terminalLines) {
+            if (line.type === 'action') {
+                if (line.action === 'load_sus') {
+                    if (animeSound.src) animeSound.play().catch(e => console.log(e));
+                    document.body.style.backgroundImage = "url('bg1.jpg')";
+                } else if (line.action === 'load_safe') {
+                    if (transitionSound.src) transitionSound.play().catch(e => console.log(e));
+                    document.body.style.backgroundImage = "url('bg2.jpg')";
+                }
+                await sleep(line.delay);
+                continue;
+            }
+
             if (line.type === 'cmd') {
                 tCurrent.innerHTML = `<span class="cmd-prompt">${prefix}</span>`;
                 await sleep(500);
@@ -334,6 +355,9 @@
                 await sleep(300);
                 tOutput.innerHTML += `<div>${line.text}********</div>`;
                 tCurrent.innerHTML = "";
+            } else if (line.type === 'error') {
+                tOutput.innerHTML += `<div class="error-text">${line.text}</div>`;
+                window.scrollTo(0, document.body.scrollHeight);
             } else {
                 tOutput.innerHTML += `<div>${line.text}</div>`;
                 window.scrollTo(0, document.body.scrollHeight);
@@ -345,17 +369,6 @@
     }
 
     async function triggerReveal() {
-        // --- TRANSITION SEQUENCE ---
-        // 1. Play transition sound
-        if (transitionSound.src) {
-            transitionSound.play().catch(e => console.log("Transition audio blocked."));
-        }
-        // 2. Change the background image to bg2
-        document.body.style.backgroundImage = "url('bg2.jpg')";
-        
-        // Wait just a second for dramatic effect while the background fades
-        await sleep(1000); 
-
         const reveal = document.getElementById('reveal-container');
         reveal.style.display = 'flex';
         
