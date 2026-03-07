@@ -464,9 +464,12 @@
         requestAnimationFrame(animateFireworks);
     }
 
-    function startFireworks() {
+ function startFireworks() {
         animateFireworks();
         setInterval(() => {
+            // NEW: Stop spawning fireworks if the user switches to another tab!
+            if (document.hidden) return; 
+            
             const x = Math.random() * fwCanvas.width;
             const y = Math.random() * (fwCanvas.height / 2);
             createFirework(x, y);
